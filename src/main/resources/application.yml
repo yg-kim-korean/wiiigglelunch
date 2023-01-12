@@ -1,0 +1,38 @@
+spring:
+  devtools:
+    remote:
+      restart:
+        enabled: true # ?? ????
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/wiiiglelunch?serverTimezone=UTC&characterEncoding=UTF-8
+    username : yg
+    password : 1234
+  #    initialization-mode : always
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL5Dialect
+    defer-datasource-initialization: true
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    generate-ddl: true
+    hibernate:
+      ddl-auto: create
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: kyg0752
+    password: whpqwaxqvnrgznui
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+data:
+  secret-key: roadtointerview
+  refresh-key: interviewtoroad
+
+server:
+  port: 8070
