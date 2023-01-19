@@ -30,7 +30,7 @@ public class Users extends BaseEntity {
 
     private String password;
 
-    private int salt;
+    private Long salt;
 
     @OneToMany(mappedBy = "usersId",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Photos> photos = new ArrayList<>();
