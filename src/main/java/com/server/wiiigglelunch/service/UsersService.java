@@ -2,9 +2,11 @@ package com.server.wiiigglelunch.service;
 
 import com.server.wiiigglelunch.domain.Photos.Photos;
 import com.server.wiiigglelunch.domain.Users.Users;
+import com.server.wiiigglelunch.domain.Users.UsersLoginForm;
 import com.server.wiiigglelunch.domain.Users.UsersSignUpForm;
 import com.server.wiiigglelunch.repository.PhotosRepository;
 import com.server.wiiigglelunch.repository.UsersRepository;
+import com.server.wiiigglelunch.security.SHA512PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -83,5 +85,14 @@ public class UsersService {
         photos.setUsersId(newUsers);
         photos.setSrc(usersSignUpForm.getImages());
         return newUsers;
+    }
+    @Transactional
+    public Users login(UsersLoginForm usersLoginForm){
+        SHA512PasswordEncoder encoder = new SHA512PasswordEncoder();
+        Users users = usersRepository.findByEmail(usersLoginForm.getEmail());
+        if (encoder.matches(usersLoginForm.getPassword(),users.getPassword())){
+            return users;
+        }
+        return null;
     }
 }

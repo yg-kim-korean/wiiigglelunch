@@ -2,7 +2,7 @@ package com.server.wiiigglelunch.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.server.wiiigglelunch.configuration.JWTUtil;
-import com.server.wiiigglelunch.domain.Users.UserLoginForm;
+import com.server.wiiigglelunch.domain.Users.UsersLoginForm;
 import com.server.wiiigglelunch.domain.Users.Users;
 import lombok.SneakyThrows;
 import org.springframework.http.HttpHeaders;
@@ -30,7 +30,7 @@ public class JWTLoginFilter extends UsernamePasswordAuthenticationFilter {
     @SneakyThrows
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException { //사용자 인증처리
-        UserLoginForm userLogin = objectMapper.readValue(request.getInputStream(), UserLoginForm.class);
+        UsersLoginForm userLogin = objectMapper.readValue(request.getInputStream(), UsersLoginForm.class);
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userLogin.getEmail(), userLogin.getPassword(), null);
         //user details..
         return getAuthenticationManager().authenticate(token);

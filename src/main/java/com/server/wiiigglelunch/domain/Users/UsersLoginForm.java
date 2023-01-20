@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UserLoginForm {
+public class UsersLoginForm {
     private String email;
     private String password;
 }
