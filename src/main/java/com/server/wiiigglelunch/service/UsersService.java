@@ -1,9 +1,9 @@
 package com.server.wiiigglelunch.service;
 
+import com.server.wiiigglelunch.configuration.JWTUtil;
+import com.server.wiiigglelunch.configuration.VerifyResult;
 import com.server.wiiigglelunch.domain.Photos.Photos;
-import com.server.wiiigglelunch.domain.Users.Users;
-import com.server.wiiigglelunch.domain.Users.UsersLoginForm;
-import com.server.wiiigglelunch.domain.Users.UsersSignUpForm;
+import com.server.wiiigglelunch.domain.Users.*;
 import com.server.wiiigglelunch.repository.PhotosRepository;
 import com.server.wiiigglelunch.repository.UsersRepository;
 import com.server.wiiigglelunch.security.SHA512PasswordEncoder;
@@ -57,7 +57,7 @@ public class UsersService {
         Users users = new Users();
         users.setNickname(usersSignUpForm.getNickname());
         users.setEmail(usersSignUpForm.getEmail());
-        users.setSalt(0L);
+        users.setEmailauth(0L);
         users.setPassword(usersSignUpForm.getPassword());
         Users newUsers = usersRepository.save(users);
 
@@ -95,4 +95,54 @@ public class UsersService {
         }
         return null;
     }
+    @Transactional
+    public UsersTokens tokenReissue(String accessToken, String refreshToken){
+        VerifyResult verifyResultAccess = JWTUtil.verifyAccess(accessToken);
+        VerifyResult verifyResultRefresh = JWTUtil.verifyRefresh(refreshToken);
+        UsersTokens usersTokens = new UsersTokens();
+
+        if (verifyResultRefresh.isSuccess() && verifyResultAccess.isSuccess()){
+            System.out.println(verifyResultRefresh);
+            System.out.println(verifyResultAccess);
+            if (verifyResultRefresh.getUsername().equals(verifyResultAccess.getUsername())){
+                Users users = usersRepository.findByEmail(verifyResultAccess.getUsername());
+                usersTokens.setUsers(users);
+                usersTokens.setAccessToken(JWTUtil.makeAuthToken(users));
+                usersTokens.setRefreshToken(JWTUtil.makeRefreshToken(users));
+                usersTokens.setVerified(true);
+            }
+            else{
+                usersTokens.setVerified(false);
+            }
+        }
+        else{
+            usersTokens.setVerified(false);
+        }
+
+        return usersTokens;
+    }
+    @Transactional
+    public Users oauthCreateOrLogin(UserOauthLoginForm userOauthLoginForm){
+        Users users = usersRepository.findByEmail(userOauthLoginForm.getEmail());
+        if (Objects.isNull(users)){
+            Users newUser = new Users();
+            newUser.setEmail(userOauthLoginForm.getEmail());
+            newUser.setEmailauth(userOauthLoginForm.getEmailauth());// 구글 2 ,카카오3
+            newUser.setNickname(userOauthLoginForm.getNickname());
+            users = usersRepository.save(newUser);
+        }
+        else if (users.getEmailauth() != userOauthLoginForm.getEmailauth()){
+            return null;
+        }
+        return users;
+    }
+    @Transactional
+    public void checkEmail(String email, String salt){
+        Users users = usersRepository.findByEmail(email);
+        if (users.getSalt() == salt){
+            users.setEmailauth(1L);
+            usersRepository.save(users);
+        }
+    }
+
 }

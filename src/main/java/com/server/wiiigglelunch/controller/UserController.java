@@ -1,21 +1,28 @@
 package com.server.wiiigglelunch.controller;
 
 
+import com.server.wiiigglelunch.configuration.JWTUtil;
 import com.server.wiiigglelunch.domain.ResponseForm;
-import com.server.wiiigglelunch.domain.Users.LoginResultForm;
-import com.server.wiiigglelunch.domain.Users.Users;
-import com.server.wiiigglelunch.domain.Users.UsersLoginForm;
-import com.server.wiiigglelunch.domain.Users.UsersSignUpForm;
+import com.server.wiiigglelunch.domain.Users.*;
 import com.server.wiiigglelunch.service.UsersService;
 import com.server.wiiigglelunch.security.SHA512PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 @Controller
@@ -49,7 +56,7 @@ public class UserController {
         }
     }
     @PostMapping("/login")
-    private ResponseEntity<?> login(@RequestBody UsersLoginForm usersLoginForm){
+    private ResponseEntity<?> login(@RequestBody UsersLoginForm usersLoginForm, HttpServletResponse response){
         ResponseForm responseForm  = new ResponseForm();
         LoginResultForm loginResultForm = new LoginResultForm();
         if (Objects.isNull(usersLoginForm.getEmail())){
@@ -65,8 +72,89 @@ public class UserController {
             responseForm.setMessage("로그인 : 일치하는 유저 정보가 없습니다.");
             return new ResponseEntity<>(responseForm,HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(users,HttpStatus.OK);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8 ));
+        String accessToken = JWTUtil.makeAuthToken(users);
+        String refToken = JWTUtil.makeRefreshToken(users);
+        headers.set("authentication", "bearer "+ accessToken);
+        Cookie cookie = new Cookie("refreshToken",refToken);
+        response.addCookie(cookie);
+        loginResultForm.setUsers(users);
+        loginResultForm.setAccessToken("bearer "+  accessToken);
+        return new ResponseEntity<>(loginResultForm,headers, HttpStatus.OK);
 
     }
+    @GetMapping("/users") // 토큰 재발급
+    public ResponseEntity<?> tokenReissue(HttpServletRequest request, HttpServletResponse response) {
+        ResponseForm responseForm = new ResponseForm();
+        Cookie[] cookie;
+        String accessToken;
+        String refreshToken = "";
+        Users users;
 
+        try {
+            accessToken = request.getHeader("authentication");
+
+        } catch (Exception e) {
+            responseForm.setMessage("토큰 재발급 : 로그인이 만료되었습니다.(accessToken)");
+            return new ResponseEntity<>(responseForm, HttpStatus.UNAUTHORIZED);
+        }
+        try {
+            cookie = request.getCookies();
+
+        } catch (Exception e) {
+            responseForm.setMessage("토큰 재발급 : 로그인이 만료되었습니다.(refreshToken)");
+            return new ResponseEntity<>(responseForm, HttpStatus.UNAUTHORIZED);
+        }
+        for (Cookie value : cookie) {
+
+            if (value.getName().equals("refreshToken")) {
+                refreshToken = value.getValue();
+            }
+            if (refreshToken.isEmpty()) {
+                responseForm.setMessage("토큰 재발급 : 로그인이 만료되었습니다.(refreshToken)");
+                return new ResponseEntity<>(responseForm, HttpStatus.UNAUTHORIZED);
+            }
+        }
+        UsersTokens usersTokens = usersService.tokenReissue(accessToken, refreshToken);
+        HttpHeaders headers = new HttpHeaders();
+        System.out.println(usersTokens);
+        if (usersTokens.getVerified()) {
+            users = usersTokens.getUsers();
+
+            headers.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8));
+
+            headers.set("authentication", "bearer " + usersTokens.getAccessToken());
+            Cookie cookies = new Cookie("refreshToken", usersTokens.getRefreshToken());
+            response.addCookie(cookies);
+        } else {
+            responseForm.setMessage("토큰 재발급 : 일치하는 유저 정보가 없습니다.");
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity<>(users, headers, HttpStatus.OK);
+    }
+    @PostMapping("/oauth")
+    public ResponseEntity<?> oauth(@RequestBody UserOauthLoginForm userOauthLoginForm,HttpServletResponse response) {
+        ResponseForm responseForm = new ResponseForm();
+        Users users = usersService.oauthCreateOrLogin(userOauthLoginForm);
+        if (Objects.isNull(users)){
+            responseForm.setMessage("Oauth 로그인 : 일치하는 유저 정보가 없습니다.");
+            return new ResponseEntity<>(responseForm,HttpStatus.NOT_FOUND);
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8 ));
+        String accessToken = JWTUtil.makeAuthToken(users);
+        String refToken = JWTUtil.makeRefreshToken(users);
+        headers.set("authentication", "bearer "+ accessToken);
+        Cookie cookie = new Cookie("refreshToken",refToken);
+        response.addCookie(cookie);
+        return new ResponseEntity<>(users,headers,HttpStatus.OK);
+    }
+    @GetMapping("/auth") //email 인증
+    public ResponseEntity<?> email_auth(@RequestParam("email") String email, @RequestParam("token") String token){
+        ResponseForm responseForm = new ResponseForm();
+        usersService.checkEmail(email,token);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

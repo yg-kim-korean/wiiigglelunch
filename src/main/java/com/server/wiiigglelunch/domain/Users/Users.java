@@ -29,8 +29,9 @@ public class Users extends BaseEntity {
     private String email;
 
     private String password;
+    private String salt;
 
-    private Long salt;
+    private Long emailauth;
 
     @OneToMany(mappedBy = "usersId",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Photos> photos = new ArrayList<>();
