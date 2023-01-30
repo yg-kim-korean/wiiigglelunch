@@ -145,4 +145,22 @@ public class UsersService {
         }
     }
 
+    @Transactional
+    public Users update(String accessToken, UsersUpdateForm usersUpdateForm){
+        VerifyResult verifyResultAccess = JWTUtil.verifyAccess(accessToken);
+        Users newUsers = new Users();
+        if (verifyResultAccess.isSuccess()){
+            Users users = usersRepository.findByEmail(verifyResultAccess.getUsername());
+            users.setNickname(usersUpdateForm.getNickname());
+            users.setEmail(usersUpdateForm.getEmail());
+            users.setPassword(usersUpdateForm.getPassword());
+            newUsers = usersRepository.save(users);
+            return newUsers;
+        }
+        else{
+            return null;
+        }
+
+    }
+
 }

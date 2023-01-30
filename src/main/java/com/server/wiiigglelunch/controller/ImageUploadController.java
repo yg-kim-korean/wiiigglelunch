@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -18,7 +17,7 @@ public class ImageUploadController {
     private  final S3Upload s3Upload;
 
     @PostMapping("/photos")
-    public ResponseEntity<?> uploadImages(@RequestBody MultipartFile multipartFile) throws IOException {
+    public ResponseEntity<?> quploadImages(@RequestBody MultipartFile multipartFile) throws IOException {
         s3Upload.upload(multipartFile);
         return new ResponseEntity<>(HttpStatus.OK);
     }

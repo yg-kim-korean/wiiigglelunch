@@ -157,4 +157,23 @@ public class UserController {
         usersService.checkEmail(email,token);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+    @PostMapping("/users")
+    public ResponseEntity<?> update_Users(@RequestBody UsersUpdateForm usersUpdateForm, HttpServletRequest request, HttpServletResponse response){
+        ResponseForm responseForm = new ResponseForm();
+        String accessToken;
+        try {
+            accessToken = request.getHeader("authentication");
+
+        } catch (Exception e) {
+            responseForm.setMessage("토큰 재발급 : 로그인이 만료되었습니다.(accessToken)");
+            return new ResponseEntity<>(responseForm, HttpStatus.UNAUTHORIZED);
+        }
+        Users users = usersService.update(accessToken,usersUpdateForm);
+        if (Objects.isNull(users)){
+            responseForm.setMessage("업데이트 실패 해당 메일로 가입한 사람이 없습니다.");
+            return new ResponseEntity<>(responseForm,HttpStatus.CONFLICT);
+        }
+        return new ResponseEntity<>(users,HttpStatus.OK);
+    }
+
 }
