@@ -17,8 +17,8 @@ spring:
       hibernate:
         format_sql: true
     generate-ddl: true
-    hibernate:
-      ddl-auto: create
+#    hibernate:
+#      ddl-auto: create
   mail:
     host: smtp.gmail.com
     port: 587
@@ -36,15 +36,15 @@ data:
 
 server:
   port: 8070
-cloud:
-  aws:
-    credentials:
-      accessKey: ${AWS_ACCESS_KEY_ID}       # AWS IAM AccessKey 적기
-      secretKey: ${AWS_SECRET_ACCESS_KEY}   # AWS IAM SecretKey 적기
-    s3:
-      bucket: 버킷 이름    # ex) marryting-gyunny
-      dir: S3 디렉토리 이름 # ex) /gyunny
-    region:
-      static: ap-northeast-2
-    stack:
-      auto: false
+#cloud:
+#  aws:
+#    credentials:
+#      accessKey: ${AWS_ACCESS_KEY_ID}       # AWS IAM AccessKey 적기
+#      secretKey: ${AWS_SECRET_ACCESS_KEY}   # AWS IAM SecretKey 적기
+#    s3:
+#      bucket: 버킷 이름    # ex) marryting-gyunny
+#      dir: S3 디렉토리 이름 # ex) /gyunny
+#    region:
+#      static: ap-northeast-2
+#    stack:
+#      auto: false
